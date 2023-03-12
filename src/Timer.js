@@ -1,9 +1,12 @@
 import React, { useState, useEffect } from 'react';
 
+const BREAK_TIME = 5; // 5 minutes in seconds
+const WORK_TIME = 10; // 25 minutes in seconds
+
 function PomodoroTimer() {
   const [isActive, setIsActive] = useState(false);
-  const [time, setTime] = useState(25); // 25 minutes in seconds
-  const [breakTime, setBreakTime] = useState(6); // 5 minutes in seconds
+  const [breakTime, setBreakTime] = useState(BREAK_TIME); // 5 minutes in seconds  
+  const [workTime, setWorkTime] = useState(WORK_TIME); // 25 minutes in seconds
   const [isBreak, setIsBreak] = useState(false);
 
   useEffect(() => {
@@ -11,29 +14,29 @@ function PomodoroTimer() {
 
     if (isActive) {
       interval = setInterval(() => {
-        setTime((time) => time - 1);
+        if(!isBreak) {
+            if (workTime > 0) {
+                setWorkTime((workTime) => workTime - 1);
+            }else {
+                setIsBreak(true);
+                setWorkTime(WORK_TIME);
+            }
+        }else {
+            if (breakTime > 0) {
+                setBreakTime((breakTime) => breakTime - 1);
+            }else {
+                setIsBreak(false);
+                setBreakTime(BREAK_TIME);
+            }
+        }
       }, 1000);
     } else {
       clearInterval(interval);
     }
 
     return () => clearInterval(interval);
-  }, [isActive]);
+  }, [breakTime, isActive, isBreak, workTime]);
 
-  useEffect(() => {
-    if (time === 0) {
-      setIsActive(false);
-      setIsBreak(true);
-    }
-  }, [time]);
-
-  useEffect(() => {
-    if (isBreak) {
-      setTime(breakTime);
-    } else {
-      setTime(1500);
-    }
-  }, [isBreak]);
 
   function startTimer() {
     setIsActive(true);
@@ -44,8 +47,7 @@ function PomodoroTimer() {
   }
 
   function resetTimer() {
-    setTime(1500);
-    setBreakTime(300);
+    setWorkTime(5);
     setIsActive(false);
     setIsBreak(false);
   }
@@ -57,45 +59,33 @@ function PomodoroTimer() {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center h-screen bg-gray-200">
-      <h1 className="text-4xl font-bold text-gray-800 mb-4">
-        {isBreak ? 'Take a break!' : 'Time to work!'}
-      </h1>
-      <div className="text-6xl font-bold text-green-500 mb-8">{formatTime(time)}</div>
-      <div className="flex space-x-4 mb-8">
-        <button
-          className={`px-6 py-2 rounded-full ${
-            isActive ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'
-          } text-white`}
-          onClick={isActive ? stopTimer : startTimer}
-        >
-          {isActive ? 'Pause' : 'Start'}
-        </button>
-        <button
-          className="px-6 py-2 rounded-full bg-gray-400 hover:bg-gray-500 text-white"
-          onClick={resetTimer}
-        >
-          Reset
-        </button>
-      </div>
-      <div className="flex space-x-4">
-        <button
-          className="px-6 py-2 rounded-full bg-blue-500 hover:bg-blue-600 text-white"
-          onClick={() => {
-            setBreakTime((breakTime) => breakTime + 60);
-          }}
-        >
-          Increase Break Time
-        </button>
-        <button
-          className="px-6 py-2 rounded-full bg-blue-500 hover:bg-blue-600 text-white"
-          onClick={() => {
-            setBreakTime((breakTime) => breakTime - 60);
-          }}
-        >
-          Decrease Break Time
-        </button>
-      </div>
+    <div className={`pomodoro-wrapper ${
+        isActive ? isBreak ? 'bg-green-700' : 'bg-red-800' : 'bg-gray-500'
+      }`}>
+
+        <div class={`flex flex-col items-center justify-center w-4/5 rounded overflow-hidden shadow-lg h-3/5 ${
+            isActive ? isBreak ? 'bg-green-600 text-gray-200' : 'bg-red-700 text-gray-200' : 'bg-gray-400 text-gray-800'  
+        }`}>
+            <div class=" flex flex-col items-center justify-center px-12 py-10">
+                <h1 className="text-4xl font-bold text-gray-200 mb-4">
+                    {isBreak ? 'Take a break!' : 'Time to work!'}
+                </h1>
+                <div className="text-9xl font-bold text-gray-200 mb-8">{isBreak ? formatTime(breakTime) : formatTime(workTime)}</div>
+                <div className="flex space-x-4 mb-8">
+                    <button class={`font-bold py-2 px-4 border-b-4  rounded ${
+                        isActive ? 'bg-gray-500 hover:bg-gray-400 border-gray-700 hover:border-gray-500 text-gray-200' : 'bg-green-500 hover:bg-green-400 border-green-700 hover:border-green-500 text-gray-800'
+                        }`}
+                        onClick={isActive ? stopTimer : startTimer}
+                    >
+                        {isActive ? 'Pause' : 'Start'}
+                    </button>
+                    <button class="bg-blue-500 hover:bg-blue-400 text-white font-bold py-2 px-4 border-b-4 border-blue-700 hover:border-blue-500 rounded">
+                        Skip
+                    </button>
+                </div>
+            </div>
+        </div>  
+      
     </div>
   );
 }
